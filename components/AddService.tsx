@@ -4,28 +4,25 @@ import React, { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Loader } from './Loader';
 
-const AddArticle: React.FC = () => {
+const AddService: React.FC = () => {
   const [title, setTitle] = useState('');
-  const [category, setCategory] = useState('');
-  const [seoKeywords, setSeoKeywords] = useState('');
+  const [type, setType] = useState('');
   const [shortDescription, setShortDescription] = useState('');
   const [description, setDescription] = useState('');
-  const [user, setUser] = useState('');
-  const [seoTitle, setSeoTitle] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     setIsLoading(true);
     e.preventDefault();
-    const articleData = { title, category, seoKeywords, shortDescription, description, user, seoTitle };
+    const serviceData = { title, type, shortDescription, description };
     
     try {
-      const response = await fetch('http://localhost:9999/api/v1/admin/articles', {
+      const response = await fetch('http://localhost:9999/api/v1/admin/services', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(articleData),
+        body: JSON.stringify(serviceData),
       });
 
       if (!response.ok) {
@@ -33,20 +30,19 @@ const AddArticle: React.FC = () => {
       }
 
       const responseData = await response.json();
-      console.log('Article successfully submitted:', responseData);
+      console.log('Service successfully submitted:', responseData);
       // Handle success (e.g., display a success message, redirect to another page)
     } catch (error) {
-      console.error('Failed to submit article:', error);
+      console.error('Failed to submit service:', error);
       // Handle error (e.g., display an error message)
-    }
-    finally{
+    } finally {
       setIsLoading(false);
     }
   };
 
   return (
     <div className="max-w-2xl mx-auto p-4 bg-white mt-2">
-      <h1 className="text-2xl font-bold mb-4">Add Article</h1>
+      <h1 className="text-2xl font-bold mb-4">Add Service</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -61,52 +57,16 @@ const AddArticle: React.FC = () => {
             />
           </div>
           <div>
-            <label htmlFor="user" className="block text-sm text-gray-700">User</label>
+            <label htmlFor="type" className="block text-sm text-gray-700">Type</label>
             <Input
               type="text"
-              id="user"
-              value={user}
-              onChange={(e) => setUser(e.target.value)}
+              id="type"
+              value={type}
+              onChange={(e) => setType(e.target.value)}
               className="rounded-xl mt-2 border-gray-400"
-              placeholder="Enter User"
+              placeholder="Enter Type"
             />
           </div>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="category" className="block text-sm text-gray-700">Category</label>
-            <Input
-              type="text"
-              id="category"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="rounded-xl mt-2 border-gray-400"
-              placeholder="Enter Category"
-            />
-          </div>
-          <div>
-            <label htmlFor="seoTitle" className="block text-sm text-gray-700">SEO Title</label>
-            <Input
-              type="text"
-              id="seoTitle"
-              value={seoTitle}
-              onChange={(e) => setSeoTitle(e.target.value)}
-              className="rounded-xl mt-2 border-gray-400"
-              placeholder="Enter SEO Title"
-            />
-          </div>
-        </div>
-        <div>
-          <label htmlFor="seoKeywords" className="block text-sm text-gray-700">SEO Keywords</label>
-          <Input
-            // as="textarea"
-            id="seoKeywords"
-            value={seoKeywords}
-            onChange={(e) => setSeoKeywords(e.target.value)}
-            className="rounded-xl mt-2 border-gray-400"
-            placeholder="Enter SEO Keywords"
-            // rows={3}
-          />
         </div>
         <div>
           <label htmlFor="shortDescription" className="block text-sm text-gray-700">Short Description</label>
@@ -131,11 +91,11 @@ const AddArticle: React.FC = () => {
             placeholder="Enter Description"
             // rows={6}
           />
-          {/* Add rich text editor here */}
+          {/* Add rich text editor here if needed */}
         </div>
         <div>
           <button type="submit" className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-            Submit {isLoading &&  <Loader/>} 
+            Submit {isLoading && <Loader />} 
           </button>
         </div>
       </form>
@@ -143,4 +103,4 @@ const AddArticle: React.FC = () => {
   );
 };
 
-export default AddArticle;
+export default AddService;

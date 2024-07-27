@@ -1,5 +1,5 @@
 import AppLayout from "@/app/AppLayout";
-import AddArticle from "@/components/AddArticle";
+import AddJobs from "@/components/AddJobs";
 import Header from "@/components/Header";
 import Table from "@/components/ArticleTable";
 
@@ -7,8 +7,8 @@ export default function Home() {
     return (
      <div className="">
         <AppLayout>
-      <Header title = {"Article"}/>
-      <AddArticle/>
+      <Header title = {"Jobs"}/>
+      <AddJobs/>
       
         </AppLayout>
      </div>

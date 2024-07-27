@@ -1,13 +1,18 @@
 import AppLayout from "@/app/AppLayout";
-
-export default function Home() {
-    return (
-     <div className="">
+import Header from "@/components/Header";
+import JobsTable from "@/components/JobsTable";
+import React from "react";
+const Service: React.FC = () => {
+  return (
+    <div className="">
+      <div className="">
         <AppLayout>
-
-      Jobs
+          <Header title={"Jobs"} />
+          <JobsTable />
         </AppLayout>
-     </div>
-    );
-  }
-  
+      </div>
+    </div>
+  );
+};
+
+export default Service;
