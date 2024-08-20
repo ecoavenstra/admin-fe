@@ -37,6 +37,7 @@ const ServiceTable: React.FC = () => {
   const [visibleDropdown, setVisibleDropdown] = useState<number | null>(null);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
+
   const [showModal, setShowModal] = useState<boolean>(false);
   const [editModal, setEditModal] = useState<boolean>(false);
   const [deleteModal, setDeleteModal] = useState<boolean>(false);
@@ -167,7 +168,7 @@ const ServiceTable: React.FC = () => {
         console.error("Failed to delete service:", error);
       } finally {
         setDeleteLoading(false);
-        toast.success("Deleted Sucessfully");
+        toast.success("Deleted Successfully");
       }
     }
   };
@@ -242,7 +243,7 @@ const ServiceTable: React.FC = () => {
             {isLoading ? (
               <tr>
                 <td colSpan={7} className="text-center p-4">
-                  <Loader/>
+                  <Loader />
                 </td>
               </tr>
             ) : (
@@ -251,37 +252,39 @@ const ServiceTable: React.FC = () => {
                   <td className="border-b p-2">
                     {indexOfFirstEntry + index + 1}
                   </td>
-                  <td className="border-b p-2 relative">
-                  <DropdownMenu>
+                  <td className="border-b p-2">
+                    <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="px-3 py-1  bg-gray-200 text-gray-800  rounded-md hover:bg-gray-300 ">
-                          Actions
-                        </Button>
+                      <Button variant="ghost" className="px-3 py-1  bg-gray-200 text-gray-800  rounded-md hover:bg-gray-300 ">
+                            Actions
+                          </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent className="bg-white">
+                      <DropdownMenuContent className="w-24 bg-white">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
-                          onClick={() => handleShow(item.id)}
                           className="cursor-pointer"
+                          onClick={() => handleShow(item.id)}
                         >
-                          <FaEye className="mr-2" /> View
+                          <FaEye className="mr-2" />
+                          View
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => handleEdit(item)}
                           className="cursor-pointer"
+                          onClick={() => handleEdit(item)}
                         >
-                          <FiEdit className="mr-2"/>
+                          <FiEdit className="mr-2" />
                           Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem
+                          className="cursor-pointer"
                           onClick={() => {
+                            setSelectedService(item);
                             setDeleteModal(true);
                           }}
-                          className="cursor-pointer"
                         >
-                         <MdDeleteOutline size={16} className="mr-2" />
-                         Delete
+                          <MdDeleteOutline className="mr-2" />
+                          Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -297,34 +300,205 @@ const ServiceTable: React.FC = () => {
           </tbody>
         </table>
       </div>
-      {filteredData.length > entriesPerPage && (
-        <div className="flex justify-between items-center mt-4">
-          <button
-            className="px-4 py-2 bg-gray-300 rounded"
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-          >
-            Previous
-          </button>
-          <div>
-            Page {currentPage} of{" "}
-            {Math.ceil(filteredData.length / entriesPerPage)}
-          </div>
-          <button
-            className="px-4 py-2 bg-gray-300 rounded"
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={
-              currentPage === Math.ceil(filteredData.length / entriesPerPage)
-            }
-          >
-            Next
-          </button>
+      <div className="flex justify-between items-center mt-4">
+        <div className="text-sm text-gray-700">
+          Showing {indexOfFirstEntry + 1} to{" "}
+          {Math.min(indexOfLastEntry, filteredData.length)} of{" "}
+          {filteredData.length} entries
         </div>
+        <div className="flex space-x-2">
+          {Array.from({
+            length: Math.ceil(filteredData.length / entriesPerPage),
+          }).map((_, index) => (
+            <button
+              key={index}
+              onClick={() => handlePageChange(index + 1)}
+              className={`${
+                currentPage === index + 1
+                  ? "bg-blue-500 text-white"
+                  : "bg-gray-200"
+              } px-3 py-1 rounded`}
+            >
+              {index + 1}
+            </button>
+          ))}
+        </div>
+      </div>
+
+    
+     {deleteModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-gray-900 opacity-50"></div>
+          <div className="bg-white p-6 w-1/3 rounded-lg shadow-lg z-10 max-w-md">
+          <h2 className="text-xl font-semibold mb-4">Confirm Delete</h2>
+            <p>Are you sure you want to delete this service?</p>
+            <div className="flex justify-end mt-4">
+              <button
+                onClick={() => setDeleteModal(false)}
+                className="bg-gray-500 text-white px-4 py-2 rounded mr-2"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                className="bg-red-500 text-white px-4 py-2 rounded"
+              >
+                {deleteLoading ? <Loader isButton /> : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+        )}
+      {/* Edit Modal */}
+      {editModal && selectedService && (
+       <div className="fixed inset-0 z-50 flex items-center justify-center">
+       <div className="absolute inset-0 bg-gray-900 opacity-50"></div>
+       <div className="bg-white p-6 w-1/2 rounded-lg shadow-lg z-10 max-w-md">
+       <h2 className="text-xl font-semibold mb-4">Edit Service</h2>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setEditLoading(true);
+                try {
+                  const response = await fetch(
+                    BACKEND_URl + `/admin/services/${selectedService.id}`,
+                    {
+                      method: "PUT",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(selectedService),
+                    }
+                  );
+                  if (!response.ok) {
+                    throw new Error("Failed to update service");
+                  }
+                  const updatedService = await response.json();
+                  setData((prevData) =>
+                    prevData.map((service) =>
+                      service.id === selectedService.id
+                        ? updatedService.service
+                        : service
+                    )
+                  );
+                  setFilteredData((prevData) =>
+                    prevData.map((service) =>
+                      service.id === selectedService.id
+                        ? updatedService.service
+                        : service
+                    )
+                  );
+                  setEditModal(false);
+                  toast.success("Service updated successfully");
+                } catch (error) {
+                  console.error("Failed to update service:", error);
+                  toast.error("Failed to update service");
+                } finally {
+                  setEditLoading(false);
+                }
+              }}
+            >
+              <div className="mb-4">
+                <label htmlFor="title" className="block text-sm font-medium">
+                  Title
+                </label>
+                <input
+                  type="text"
+                  id="title"
+                  value={selectedService.title}
+                  onChange={(e) =>
+                    setSelectedService({
+                      ...selectedService,
+                      title: e.target.value,
+                    })
+                  }
+                  className="mt-1 p-2 border rounded w-full"
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="type" className="block text-sm font-medium">
+                  Type
+                </label>
+                <input
+                  type="text"
+                  id="type"
+                  value={selectedService.type}
+                  onChange={(e) =>
+                    setSelectedService({
+                      ...selectedService,
+                      type: e.target.value,
+                    })
+                  }
+                  className="mt-1 p-2 border rounded w-full"
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label
+                  htmlFor="shortDescription"
+                  className="block text-sm font-medium"
+                >
+                  Short Description
+                </label>
+                <textarea
+                  id="shortDescription"
+                  value={selectedService.shortDescription}
+                  onChange={(e) =>
+                    setSelectedService({
+                      ...selectedService,
+                      shortDescription: e.target.value,
+                    })
+                  }
+                  className="mt-1 p-2 border rounded w-full"
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label
+                  htmlFor="description"
+                  className="block text-sm font-medium"
+                >
+                  Description
+                </label>
+                <textarea
+                  id="description"
+                  value={selectedService.description}
+                  onChange={(e) =>
+                    setSelectedService({
+                      ...selectedService,
+                      description: e.target.value,
+                    })
+                  }
+                  className="mt-1 p-2 border rounded w-full"
+                  required
+                />
+              </div>
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setEditModal(false)}
+                  className="bg-gray-500 text-white px-4 py-2 rounded mr-2"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-blue-500 text-white px-4 py-2 rounded"
+                >
+                  {editLoading ? <Loader isButton /> : "Save Changes"}
+                </button>
+              </div>
+            </form>
+       </div>
+     </div>
       )}
+
+      {/* View Modal */}
       {showModal && selectedService && (
-        <div className="fixed inset-0 flex items-center z-50 justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-4 rounded shadow-lg w-1/2">
-            <h2 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800">Service Details</h2>
+        <div className="fixed inset-0  bg-black  bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg w-1/3 shadow-lg flex flex-col gap-3">
+            <h2 className="text-xl font-semibold mb-4">Service Details</h2>
             <p>
               <strong>Title:</strong> {selectedService.title}
             </p>
@@ -342,158 +516,20 @@ const ServiceTable: React.FC = () => {
               <strong>Created At:</strong>{" "}
               {formatDate(selectedService.createdAt)}
             </p>
-            <button
-              className="mt-4 bg-gray-300 px-4 py-2 rounded"
-              onClick={() => setShowModal(false)}
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
-      {editModal && selectedService && (
-        <div className="fixed inset-0 flex  z-50 items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-4 rounded shadow-lg w-1/2">
-            <h2 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800">Edit Service</h2>
-            <form
-              onSubmit={async (event) => {
-                if (!selectedService) return;
-
-                const formData = new FormData(event.target as HTMLFormElement);
-                const updatedService = {
-                  ...selectedService,
-                  title: formData.get("title") as string,
-                  type: formData.get("type") as string,
-                  shortDescription: formData.get("shortDescription") as string,
-                  description: formData.get("description") as string,
-                };
-
-                try {
-                  setEditLoading(true);
-                  const response = await fetch(
-                    BACKEND_URl + `/admin/services/${selectedService.id}`,
-                    {
-                      method: "PUT",
-                      headers: {
-                        "Content-Type": "application/json",
-                      },
-                      body: JSON.stringify(updatedService),
-                    }
-                  );
-                  if (!response.ok) {
-                    throw new Error("Network response was not ok");
-                  }
-                  const updatedServices = data.map((service) =>
-                    service.id === selectedService.id ? updatedService : service
-                  );
-                  setData(updatedServices);
-                  setFilteredData(updatedServices);
-                  setEditModal(false);
-                  setSelectedService(null);
-                } catch (error) {
-                  console.error("Failed to update service:", error);
-                } finally {
-                  setEditLoading(false);
-                  toast.success("Edited Sucessfully");
-                }
-              }}
-            >
-              <div className="mb-4">
-                <label htmlFor="title" className="block mb-2">
-                  Title
-                </label>
-                <input
-                  type="text"
-                  id="title"
-                  name="title"
-                  defaultValue={selectedService.title}
-                  className="w-full p-2 border rounded"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label htmlFor="type" className="block mb-2">
-                  Type
-                </label>
-                <input
-                  type="text"
-                  id="type"
-                  name="type"
-                  defaultValue={selectedService.type}
-                  className="w-full p-2 border rounded"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label htmlFor="shortDescription" className="block mb-2">
-                  Short Description
-                </label>
-                <textarea
-                  id="shortDescription"
-                  name="shortDescription"
-                  defaultValue={selectedService.shortDescription}
-                  className="w-full p-2 border rounded"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label htmlFor="description" className="block mb-2">
-                  Description
-                </label>
-                <textarea
-                  id="description"
-                  name="description"
-                  defaultValue={selectedService.description}
-                  className="w-full p-2 border rounded"
-                  required
-                />
-              </div>
-              <div className="flex justify-end space-x-4">
+            <div className="flex justify-end mt-4">
+              {deleteLoading ? (
+                <Loader isButton />
+              ) : (
                 <button
-                  type="button"
-                  className="bg-gray-300 px-4 py-2 rounded"
-                  onClick={() => setEditModal(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
+                  onClick={() => setShowModal(false)}
                   className="bg-blue-500 text-white px-4 py-2 rounded"
                 >
-                  <div className="flex items-center justify-center">
-                    Save {editLoading && <ButtonLoader />}
-                  </div>
+                  Close
                 </button>
-              </div>
-            </form>
+              )}
+            </div>
           </div>
         </div>
-      )}
-      {deleteModal && (
-               <div className="fixed inset-0 z-50 flex items-center justify-center">
-               <div className="absolute inset-0 bg-gray-900 opacity-50"></div>
-               <div className="bg-white p-6 w-1/3 rounded-lg shadow-lg z-10 max-w-md">
-                 <h2 className="text-xl font-semibold mb-4">Delete Enquiry</h2>
-                 <p>
-                   Are you sure you want to delete ths Service!!
-                 </p>
-                 <div className="mt-4 flex ">
-                   <button
-                     onClick={() => setDeleteModal(false)}
-                     className="bg-gray-500 text-white p-2 rounded mr-2"
-                   >
-                     Cancel
-                   </button>
-                   <button
-                     onClick={handleDelete}
-                     className="bg-red-500 text-white p-2 rounded flex items-center"
-                     disabled={deleteLoading}
-                   >
-                     {deleteLoading ? <Loader isButton/> : "Delete"}
-                   </button>
-                 </div>
-               </div>
-             </div>
       )}
     </div>
   );
