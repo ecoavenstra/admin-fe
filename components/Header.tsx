@@ -1,9 +1,9 @@
 import { FaHome } from "react-icons/fa";
 import { IoIosMail } from "react-icons/io";
 
-export default function Header({title} : {title : string} ){
-    return (
-        <div className="flex justify-between items-center px-6 py-4 bg-transparent ">
+export default function Header({ title, sTitle }: { title: string, sTitle :string }) {
+  return (
+    <div className="flex justify-between items-center z-50 px-6 py-4 bg-transparent ">
       <div className="flex items-center gap-4">
         <div className="flex items-center justify-center w-10 h-10 bg-blue-400 rounded-xl">
           <IoIosMail size={24} color="white" />
@@ -16,10 +16,10 @@ export default function Header({title} : {title : string} ){
       <div className="flex items-center gap-2 text-gray-500">
         <FaHome />
         <span className="mx-2">/</span>
-        <span>Constant Management</span>
+        <span>{sTitle}</span>
         <span className="mx-2">/</span>
         <span className="text-black">{title}</span>
       </div>
     </div>
-    )
+  );
 }

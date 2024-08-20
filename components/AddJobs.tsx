@@ -2,9 +2,15 @@
 
 import React, { useState } from 'react';
 import { Input } from "@/components/ui/input";
-import { Loader } from './Loader';
+import Loader  from './ButtonLoader';
+import toast, { Toaster } from "react-hot-toast";
+
+import { BACKEND_URl } from '@/constants';
+import { useRouter } from 'next/navigation';
 
 const AddJob: React.FC = () => {
+  const route = useRouter();
+
   const [companyName, setCompanyName] = useState('');
   const [jobTitle, setJobTitle] = useState('');
   const [salaryRange, setSalaryRange] = useState('');
@@ -34,7 +40,7 @@ const AddJob: React.FC = () => {
     };
     console.log(jobData);
     try {
-      const response = await fetch('http://localhost:9999/api/v1/admin/jobs', {
+      const response = await fetch(BACKEND_URl +'/admin/jobs', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -53,7 +59,9 @@ const AddJob: React.FC = () => {
       console.error('Failed to submit job:', error);
       // Handle error (e.g., display an error message)
     } finally {
+      toast.success('Job added successfully!')
       setIsLoading(false);
+      route.push('/manage/jobs')
     }
   };
 

@@ -6,7 +6,7 @@ export default function Home() {
   return (
     <div className="">
       <AppLayout>
-        <Header title={"Article"} />
+        <Header title={"Article"} sTitle="Manage"/>
         <Table />
       </AppLayout>
     </div>

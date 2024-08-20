@@ -1,0 +1,1 @@
+export const BACKEND_URl = 'https://ecoavenstra-be.onrender.com/api/v1'

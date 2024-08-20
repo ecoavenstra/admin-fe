@@ -7,7 +7,7 @@ export default function Home() {
     return (
      <div className="">
         <AppLayout>
-      <Header title = {"Jobs"}/>
+      <Header title = {"Jobs"} sTitle='Manage'/>
       <AddJobs/>
       
         </AppLayout>

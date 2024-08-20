@@ -2,6 +2,21 @@
 import React, { useState, useEffect, ChangeEvent, useRef } from "react";
 import { FaFileExcel, FaEye, FaPrint, FaPlusCircle } from "react-icons/fa";
 import { useRouter } from "next/navigation";
+import { BACKEND_URl } from "@/constants";
+import toast from "react-hot-toast";
+import ButtonLoader from "./ButtonLoader";
+import Loader from "./Loader";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { FiEdit } from "react-icons/fi";
+import { MdDeleteOutline } from "react-icons/md";
 
 interface Service {
   id: number;
@@ -26,12 +41,14 @@ const ServiceTable: React.FC = () => {
   const [editModal, setEditModal] = useState<boolean>(false);
   const [deleteModal, setDeleteModal] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [editLoading, setEditLoading] = useState<boolean>(false);
+  const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch("http://localhost:9999/api/v1/admin/services");
+        const response = await fetch(BACKEND_URl + "/admin/services");
         if (!response.ok) {
           throw new Error("Network response was not ok");
         }
@@ -57,7 +74,10 @@ const ServiceTable: React.FC = () => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setVisibleDropdown(null);
       }
     };
@@ -80,7 +100,9 @@ const ServiceTable: React.FC = () => {
 
   const indexOfLastEntry = currentPage * entriesPerPage;
   const indexOfFirstEntry = indexOfLastEntry - entriesPerPage;
-  const currentEntries = Array.isArray(filteredData) ? filteredData.slice(indexOfFirstEntry, indexOfLastEntry) : [];
+  const currentEntries = Array.isArray(filteredData)
+    ? filteredData.slice(indexOfFirstEntry, indexOfLastEntry)
+    : [];
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -105,7 +127,7 @@ const ServiceTable: React.FC = () => {
 
   const handleShow = async (id: number) => {
     try {
-      const response = await fetch(`http://localhost:9999/api/v1/admin/services/${id}`);
+      const response = await fetch(BACKEND_URl + `/admin/services/${id}`);
       if (!response.ok) {
         throw new Error("Network response was not ok");
       }
@@ -125,18 +147,27 @@ const ServiceTable: React.FC = () => {
   const handleDelete = async () => {
     if (selectedService) {
       try {
-        const response = await fetch(`http://localhost:9999/api/v1/admin/services/${selectedService.id}`, {
-          method: "DELETE",
-        });
+        setDeleteLoading(true);
+        const response = await fetch(
+          BACKEND_URl + `/admin/services/${selectedService.id}`,
+          {
+            method: "DELETE",
+          }
+        );
         if (!response.ok) {
           throw new Error("Network response was not ok");
         }
         setData(data.filter((service) => service.id !== selectedService.id));
-        setFilteredData(filteredData.filter((service) => service.id !== selectedService.id));
+        setFilteredData(
+          filteredData.filter((service) => service.id !== selectedService.id)
+        );
         setDeleteModal(false);
         setSelectedService(null);
       } catch (error) {
         console.error("Failed to delete service:", error);
+      } finally {
+        setDeleteLoading(false);
+        toast.success("Deleted Sucessfully");
       }
     }
   };
@@ -210,47 +241,50 @@ const ServiceTable: React.FC = () => {
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={7} className="text-center p-4">Loading...</td>
+                <td colSpan={7} className="text-center p-4">
+                  <Loader/>
+                </td>
               </tr>
             ) : (
               currentEntries.map((item, index) => (
                 <tr key={item.id}>
-                  <td className="border-b p-2">{indexOfFirstEntry + index + 1}</td>
+                  <td className="border-b p-2">
+                    {indexOfFirstEntry + index + 1}
+                  </td>
                   <td className="border-b p-2 relative">
-                    <button
-                      className="bg-gray-200 text-gray-800 px-3 py-1 rounded"
-                      onClick={() => toggleDropdown(item.id)}
-                    >
-                      Action
-                    </button>
-                    {visibleDropdown === item.id && (
-                      <div
-                        ref={dropdownRef}
-                        className="absolute z-10 bg-white border rounded shadow-md mt-1"
-                      >
-                        <button
-                          className="block hover:bg-gray-200 w-full text-left px-4 py-2 text-sm"
+                  <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="px-3 py-1  bg-gray-200 text-gray-800  rounded-md hover:bg-gray-300 ">
+                          Actions
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="bg-white">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
                           onClick={() => handleShow(item.id)}
+                          className="cursor-pointer"
                         >
-                          Show
-                        </button>
-                        <button
-                          className="block hover:bg-gray-200 w-full text-left px-4 py-2 text-sm"
+                          <FaEye className="mr-2" /> View
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
                           onClick={() => handleEdit(item)}
+                          className="cursor-pointer"
                         >
+                          <FiEdit className="mr-2"/>
                           Edit
-                        </button>
-                        <button
-                          className="block hover:bg-gray-200 w-full text-left px-4 py-2 text-sm"
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
                           onClick={() => {
-                            setSelectedService(item);
                             setDeleteModal(true);
                           }}
+                          className="cursor-pointer"
                         >
-                          Delete
-                        </button>
-                      </div>
-                    )}
+                         <MdDeleteOutline size={16} className="mr-2" />
+                         Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </td>
                   <td className="border-b p-2">{item.title}</td>
                   <td className="border-b p-2">{item.type}</td>
@@ -273,26 +307,41 @@ const ServiceTable: React.FC = () => {
             Previous
           </button>
           <div>
-            Page {currentPage} of {Math.ceil(filteredData.length / entriesPerPage)}
+            Page {currentPage} of{" "}
+            {Math.ceil(filteredData.length / entriesPerPage)}
           </div>
           <button
             className="px-4 py-2 bg-gray-300 rounded"
             onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === Math.ceil(filteredData.length / entriesPerPage)}
+            disabled={
+              currentPage === Math.ceil(filteredData.length / entriesPerPage)
+            }
           >
             Next
           </button>
         </div>
       )}
       {showModal && selectedService && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="fixed inset-0 flex items-center z-50 justify-center bg-black bg-opacity-50">
           <div className="bg-white p-4 rounded shadow-lg w-1/2">
-            <h2 className="text-xl font-semibold mb-4">Service Details</h2>
-            <p><strong>Title:</strong> {selectedService.title}</p>
-            <p><strong>Type:</strong> {selectedService.type}</p>
-            <p><strong>Short Description:</strong> {selectedService.shortDescription}</p>
-            <p><strong>Description:</strong> {selectedService.description}</p>
-            <p><strong>Created At:</strong> {formatDate(selectedService.createdAt)}</p>
+            <h2 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800">Service Details</h2>
+            <p>
+              <strong>Title:</strong> {selectedService.title}
+            </p>
+            <p>
+              <strong>Type:</strong> {selectedService.type}
+            </p>
+            <p>
+              <strong>Short Description:</strong>{" "}
+              {selectedService.shortDescription}
+            </p>
+            <p>
+              <strong>Description:</strong> {selectedService.description}
+            </p>
+            <p>
+              <strong>Created At:</strong>{" "}
+              {formatDate(selectedService.createdAt)}
+            </p>
             <button
               className="mt-4 bg-gray-300 px-4 py-2 rounded"
               onClick={() => setShowModal(false)}
@@ -303,12 +352,11 @@ const ServiceTable: React.FC = () => {
         </div>
       )}
       {editModal && selectedService && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="fixed inset-0 flex  z-50 items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-4 rounded shadow-lg w-1/2">
-            <h2 className="text-xl font-semibold mb-4">Edit Service</h2>
+            <h2 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800">Edit Service</h2>
             <form
               onSubmit={async (event) => {
-                event.preventDefault();
                 if (!selectedService) return;
 
                 const formData = new FormData(event.target as HTMLFormElement);
@@ -321,13 +369,17 @@ const ServiceTable: React.FC = () => {
                 };
 
                 try {
-                  const response = await fetch(`http://localhost:9999/api/v1/admin/services/${selectedService.id}`, {
-                    method: "PUT",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(updatedService),
-                  });
+                  setEditLoading(true);
+                  const response = await fetch(
+                    BACKEND_URl + `/admin/services/${selectedService.id}`,
+                    {
+                      method: "PUT",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(updatedService),
+                    }
+                  );
                   if (!response.ok) {
                     throw new Error("Network response was not ok");
                   }
@@ -340,6 +392,9 @@ const ServiceTable: React.FC = () => {
                   setSelectedService(null);
                 } catch (error) {
                   console.error("Failed to update service:", error);
+                } finally {
+                  setEditLoading(false);
+                  toast.success("Edited Sucessfully");
                 }
               }}
             >
@@ -405,7 +460,9 @@ const ServiceTable: React.FC = () => {
                   type="submit"
                   className="bg-blue-500 text-white px-4 py-2 rounded"
                 >
-                  Save
+                  <div className="flex items-center justify-center">
+                    Save {editLoading && <ButtonLoader />}
+                  </div>
                 </button>
               </div>
             </form>
@@ -413,26 +470,30 @@ const ServiceTable: React.FC = () => {
         </div>
       )}
       {deleteModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-4 rounded shadow-lg">
-            <h2 className="text-xl font-semibold mb-4">Delete Service</h2>
-            <p>Are you sure you want to delete this service?</p>
-            <div className="flex justify-end space-x-4 mt-4">
-              <button
-                className="bg-gray-300 px-4 py-2 rounded"
-                onClick={() => setDeleteModal(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className="bg-red-500 text-white px-4 py-2 rounded"
-                onClick={handleDelete}
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
+               <div className="fixed inset-0 z-50 flex items-center justify-center">
+               <div className="absolute inset-0 bg-gray-900 opacity-50"></div>
+               <div className="bg-white p-6 w-1/3 rounded-lg shadow-lg z-10 max-w-md">
+                 <h2 className="text-xl font-semibold mb-4">Delete Enquiry</h2>
+                 <p>
+                   Are you sure you want to delete ths Service!!
+                 </p>
+                 <div className="mt-4 flex ">
+                   <button
+                     onClick={() => setDeleteModal(false)}
+                     className="bg-gray-500 text-white p-2 rounded mr-2"
+                   >
+                     Cancel
+                   </button>
+                   <button
+                     onClick={handleDelete}
+                     className="bg-red-500 text-white p-2 rounded flex items-center"
+                     disabled={deleteLoading}
+                   >
+                     {deleteLoading ? <Loader isButton/> : "Delete"}
+                   </button>
+                 </div>
+               </div>
+             </div>
       )}
     </div>
   );

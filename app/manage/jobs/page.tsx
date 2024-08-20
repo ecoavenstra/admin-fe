@@ -7,7 +7,7 @@ const Service: React.FC = () => {
     <div className="">
       <div className="">
         <AppLayout>
-          <Header title={"Jobs"} />
+          <Header title={"Jobs"} sTitle='Manage'/>
           <JobsTable />
         </AppLayout>
       </div>

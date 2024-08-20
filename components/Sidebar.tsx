@@ -28,7 +28,7 @@ export default function Sidebar() {
     <div className="fixed  top-[12vh] left-0 bg-slate-800 h-[88vh] w-64">
       <div className="flex flex-col justify-center">
         <div className="flex flex-col justify-center gap-5 mt-6 text-gray-300">
-          <div className={getClassName('dashboard')} onClick={() => handleNavigation('dashboard')}>
+          <div className={getClassName('dashboard')} onClick={() => handleNavigation('/')}>
             <MdOutlineDashboard size={19} />
             Dashboard
           </div>
@@ -48,7 +48,7 @@ export default function Sidebar() {
               </div>
             )}
           </div>
-          <div className="flex flex-col gap-1">
+          {/* <div className="flex flex-col gap-1">
             <div className="flex justify-between items-center px-6 cursor-pointer hover:text-white" onClick={toggleWebsiteSetup}>
               <div className="flex gap-3 items-center">
                 <MdWebhook size={19} />
@@ -63,8 +63,8 @@ export default function Sidebar() {
                 <div className={getClassName('title')} onClick={() => handleNavigation('title')}>Title</div>
               </div>
             )}
-          </div>
-          <div className="flex flex-col gap-1">
+          </div> */}
+          {/* <div className="flex flex-col gap-1">
             <div className="flex justify-between items-center px-6 cursor-pointer hover:text-white" onClick={toggleConstantManagement}>
               <div className="flex gap-3 items-center">
                 <IoIosMail size={19} />
@@ -78,8 +78,8 @@ export default function Sidebar() {
                 <div className={getClassName('master-category')} onClick={() => handleNavigation('master-category')}>Master Category</div>
               </div>
             )}
-          </div>
-          <div className={getClassName('user-enquiry')} onClick={() => handleNavigation('user-enquiry')}>
+          </div> */}
+          <div className={getClassName('user-enquiry')} onClick={() => handleNavigation('/user-enquiry')}>
             <FaUserCog size={19} />
             User Enquiry
           </div>

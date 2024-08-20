@@ -2,6 +2,21 @@
 import React, { useState, useEffect, ChangeEvent, useRef } from "react";
 import { FaFileExcel, FaEye, FaPrint, FaPlusCircle } from "react-icons/fa";
 import { useRouter } from "next/navigation";
+import { BACKEND_URl } from "@/constants";
+import toast from "react-hot-toast";
+import Loader from "./Loader";
+import ButtonLoader from "./ButtonLoader";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { FiEdit } from "react-icons/fi";
+import { MdDeleteOutline } from "react-icons/md";
 
 interface Job {
   id: number;
@@ -32,12 +47,14 @@ const JobsTable: React.FC = () => {
   const [editModal, setEditModal] = useState<boolean>(false);
   const [deleteModal, setDeleteModal] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [editLoading, setEditLoading] = useState<boolean>(false);
+  const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch("http://localhost:9999/api/v1/admin/jobs");
+        const response = await fetch(BACKEND_URl + "/admin/jobs");
         if (!response.ok) {
           throw new Error("Network response was not ok");
         }
@@ -125,9 +142,7 @@ const JobsTable: React.FC = () => {
 
   const handleShow = async (id: number) => {
     try {
-      const response = await fetch(
-        `http://localhost:9999/api/v1/admin/jobs/${id}`
-      );
+      const response = await fetch(BACKEND_URl + `/admin/jobs/${id}`);
       if (!response.ok) {
         throw new Error("Network response was not ok");
       }
@@ -147,8 +162,9 @@ const JobsTable: React.FC = () => {
   const handleDelete = async () => {
     if (selectedJob) {
       try {
+        setDeleteLoading(true);
         const response = await fetch(
-          `http://localhost:9999/api/v1/admin/jobs/${selectedJob.id}`,
+          BACKEND_URl + `/admin/jobs/${selectedJob.id}`,
           {
             method: "DELETE",
           }
@@ -164,6 +180,9 @@ const JobsTable: React.FC = () => {
         setSelectedJob(null);
       } catch (error) {
         console.error("Failed to delete job:", error);
+      } finally {
+        setDeleteLoading(true);
+        toast.success("Deleted sucessfully");
       }
     }
   };
@@ -238,7 +257,7 @@ const JobsTable: React.FC = () => {
             {isLoading ? (
               <tr>
                 <td colSpan={7} className="text-center p-4">
-                  Loading...
+                  <Loader />
                 </td>
               </tr>
             ) : (
@@ -248,40 +267,39 @@ const JobsTable: React.FC = () => {
                     {indexOfFirstEntry + index + 1}
                   </td>
                   <td className="border-b p-2 relative">
-                    <button
-                      className="bg-gray-200 text-gray-800 px-3 py-1 rounded"
-                      onClick={() => toggleDropdown(item.id)}
-                    >
-                      Actions
-                    </button>
-                    {visibleDropdown === item.id && (
-                      <div
-                        ref={dropdownRef}
-                        className="absolute z-10 bg-white border shadow-md rounded mt-1 py-1 w-32"
-                      >
-                        <button
-                          className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-200"
+                  <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="px-3 py-1  bg-gray-200 text-gray-800  rounded-md hover:bg-gray-300 ">
+                          Actions
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="bg-white">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
                           onClick={() => handleShow(item.id)}
+                          className="cursor-pointer"
                         >
-                          Show
-                        </button>
-                        <button
-                          className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-200"
+                          <FaEye className="mr-2" /> View
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
                           onClick={() => handleEdit(item)}
+                          className="cursor-pointer"
                         >
+                          <FiEdit className="mr-2"/>
                           Edit
-                        </button>
-                        <button
-                          className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-200"
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
                           onClick={() => {
-                            setSelectedJob(item);
                             setDeleteModal(true);
                           }}
+                          className="cursor-pointer"
                         >
-                          Delete
-                        </button>
-                      </div>
-                    )}
+                         <MdDeleteOutline size={16} className="mr-2" />
+                         Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </td>
                   <td className="border-b p-2">{item.jobTitle}</td>
                   <td className="border-b p-2">{item.companyName}</td>
@@ -322,13 +340,23 @@ const JobsTable: React.FC = () => {
         </div>
       )}
       {showModal && selectedJob && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+        <div className="fixed inset-0  bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white p-6 rounded shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">{selectedJob.jobTitle}</h2>
-            <p><strong>Company Name:</strong> {selectedJob.companyName}</p>
-            <p><strong>Category:</strong> {selectedJob.category}</p>
-            <p><strong>Description:</strong> {selectedJob.jobDescription}</p>
-            <p><strong>Created At:</strong> {formatDate(selectedJob.createdAt)}</p>
+            <h2 className="text-lg font-semibold mb-4">
+              {selectedJob.jobTitle}
+            </h2>
+            <p>
+              <strong>Company Name:</strong> {selectedJob.companyName}
+            </p>
+            <p>
+              <strong>Category:</strong> {selectedJob.category}
+            </p>
+            <p>
+              <strong>Description:</strong> {selectedJob.jobDescription}
+            </p>
+            <p>
+              <strong>Created At:</strong> {formatDate(selectedJob.createdAt)}
+            </p>
             <button
               className="mt-4 bg-red-500 text-white px-4 py-2 rounded"
               onClick={() => setShowModal(false)}
@@ -340,14 +368,15 @@ const JobsTable: React.FC = () => {
       )}
       {editModal && selectedJob && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded shadow-lg">
+          <div className="bg-white w-1/2 p-6 rounded shadow-lg">
             <h2 className="text-lg font-semibold mb-4">Edit Job</h2>
             <form
               onSubmit={async (e) => {
-                e.preventDefault();
+                // e.preventDefault();
                 try {
+                  setEditLoading(true);
                   const response = await fetch(
-                    `http://localhost:9999/api/v1/admin/jobs/${selectedJob.id}`,
+                    BACKEND_URl + `/admin/jobs/${selectedJob.id}`,
                     {
                       method: "PUT",
                       headers: {
@@ -373,6 +402,9 @@ const JobsTable: React.FC = () => {
                   setEditModal(false);
                 } catch (error) {
                   console.error("Failed to update job:", error);
+                } finally {
+                  setEditLoading(false);
+                  toast.success("Edited Successfully");
                 }
               }}
             >
@@ -429,7 +461,9 @@ const JobsTable: React.FC = () => {
                 type="submit"
                 className="bg-blue-500 text-white px-4 py-2 rounded"
               >
-                Save Changes
+                <div className="flex justify-center items-center">
+                  Save Changes {editLoading && <ButtonLoader />}
+                </div>
               </button>
               <button
                 type="button"
@@ -443,26 +477,30 @@ const JobsTable: React.FC = () => {
         </div>
       )}
       {deleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">Delete Job</h2>
-            <p>Are you sure you want to delete this job?</p>
-            <div className="flex justify-end mt-4">
-              <button
-                className="bg-red-500 text-white px-4 py-2 rounded"
-                onClick={handleDelete}
-              >
-                Delete
-              </button>
-              <button
-                className="ml-4 bg-gray-500 text-white px-4 py-2 rounded"
-                onClick={() => setDeleteModal(false)}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+           <div className="fixed inset-0 z-50 flex items-center justify-center">
+           <div className="absolute inset-0 bg-gray-900 opacity-50"></div>
+           <div className="bg-white p-6 w-1/3 rounded-lg shadow-lg z-10 max-w-md">
+             <h2 className="text-xl font-semibold mb-4">Delete Enquiry</h2>
+             <p>
+               Are you sure you want to delete ths Job!!
+             </p>
+             <div className="mt-4 flex ">
+               <button
+                 onClick={() => setDeleteModal(false)}
+                 className="bg-gray-500 text-white p-2 rounded mr-2"
+               >
+                 Cancel
+               </button>
+               <button
+                 onClick={handleDelete}
+                 className="bg-red-500 text-white p-2 rounded flex items-center"
+                 disabled={deleteLoading}
+               >
+                 {deleteLoading ? <Loader isButton/> : "Delete"}
+               </button>
+             </div>
+           </div>
+         </div>
       )}
     </div>
   );

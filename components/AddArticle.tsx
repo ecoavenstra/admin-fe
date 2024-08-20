@@ -1,46 +1,78 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
-import { Loader } from './Loader';
+import { BACKEND_URl } from "@/constants";
+import toast, { Toaster } from "react-hot-toast";
+import { useRouter } from "next/navigation";
+import ButtonLoader from "./ButtonLoader";
+import Image from "next/image";
+import Loader from "./Loader";
 
 const AddArticle: React.FC = () => {
-  const [title, setTitle] = useState('');
-  const [category, setCategory] = useState('');
-  const [seoKeywords, setSeoKeywords] = useState('');
-  const [shortDescription, setShortDescription] = useState('');
-  const [description, setDescription] = useState('');
-  const [user, setUser] = useState('');
-  const [seoTitle, setSeoTitle] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const [title, setTitle] = useState("");
+  const [category, setCategory] = useState("");
+  const [seoKeywords, setSeoKeywords] = useState("");
+  const [shortDescription, setShortDescription] = useState("");
+  const [description, setDescription] = useState("");
+  const [user, setUser] = useState("");
+  const [seoTitle, setSeoTitle] = useState("");
+  const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const route = useRouter();
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setCoverImage(file);
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => setPreview(reader.result as string);
+      reader.readAsDataURL(file);
+    } else {
+      setPreview(null);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     setIsLoading(true);
     e.preventDefault();
-    const articleData = { title, category, seoKeywords, shortDescription, description, user, seoTitle };
-    
+
+    const formData = new FormData();
+    formData.append("title", title);
+    formData.append("category", category);
+    formData.append("seoKeywords", seoKeywords);
+    formData.append("shortDescription", shortDescription);
+    formData.append("description", description);
+    formData.append("user", user);
+    formData.append("seoTitle", seoTitle);
+    if (coverImage) {
+      formData.append("coverImage", coverImage);
+    }
+
     try {
-      const response = await fetch('http://localhost:9999/api/v1/admin/articles', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(articleData),
-      });
+      const response = await fetch(
+        "http://localhost:9999/api/v1/admin/articles",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        throw new Error("Network response was not ok");
       }
 
       const responseData = await response.json();
-      console.log('Article successfully submitted:', responseData);
-      // Handle success (e.g., display a success message, redirect to another page)
+      console.log("Article successfully submitted:", responseData);
+      toast.success("Article Created Successfully");
     } catch (error) {
-      console.error('Failed to submit article:', error);
-      // Handle error (e.g., display an error message)
-    }
-    finally{
+      console.error("Failed to submit article:", error);
+      toast.error("Failed to create article");
+    } finally {
       setIsLoading(false);
+      route.push("/manage/article");
     }
   };
 
@@ -50,8 +82,10 @@ const AddArticle: React.FC = () => {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label htmlFor="title" className="block text-sm text-gray-700">Title</label>
-            <Input 
+            <label htmlFor="title" className="block text-sm text-gray-700">
+              Title
+            </label>
+            <Input
               type="text"
               id="title"
               value={title}
@@ -61,7 +95,9 @@ const AddArticle: React.FC = () => {
             />
           </div>
           <div>
-            <label htmlFor="user" className="block text-sm text-gray-700">User</label>
+            <label htmlFor="user" className="block text-sm text-gray-700">
+              User
+            </label>
             <Input
               type="text"
               id="user"
@@ -74,7 +110,9 @@ const AddArticle: React.FC = () => {
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label htmlFor="category" className="block text-sm text-gray-700">Category</label>
+            <label htmlFor="category" className="block text-sm text-gray-700">
+              Category
+            </label>
             <Input
               type="text"
               id="category"
@@ -85,7 +123,9 @@ const AddArticle: React.FC = () => {
             />
           </div>
           <div>
-            <label htmlFor="seoTitle" className="block text-sm text-gray-700">SEO Title</label>
+            <label htmlFor="seoTitle" className="block text-sm text-gray-700">
+              SEO Title
+            </label>
             <Input
               type="text"
               id="seoTitle"
@@ -97,45 +137,75 @@ const AddArticle: React.FC = () => {
           </div>
         </div>
         <div>
-          <label htmlFor="seoKeywords" className="block text-sm text-gray-700">SEO Keywords</label>
+          <label htmlFor="seoKeywords" className="block text-sm text-gray-700">
+            SEO Keywords
+          </label>
           <Input
-            // as="textarea"
             id="seoKeywords"
             value={seoKeywords}
             onChange={(e) => setSeoKeywords(e.target.value)}
             className="rounded-xl mt-2 border-gray-400"
             placeholder="Enter SEO Keywords"
-            // rows={3}
           />
         </div>
         <div>
-          <label htmlFor="shortDescription" className="block text-sm text-gray-700">Short Description</label>
+          <label
+            htmlFor="shortDescription"
+            className="block text-sm text-gray-700"
+          >
+            Short Description
+          </label>
           <Input
-            // as="textarea"
             id="shortDescription"
             value={shortDescription}
             onChange={(e) => setShortDescription(e.target.value)}
             className="rounded-xl mt-2 border-gray-400"
             placeholder="Enter Short Description"
-            // rows={3}
           />
         </div>
         <div>
-          <label htmlFor="description" className="block text-sm text-gray-700">Description</label>
+          <label htmlFor="description" className="block text-sm text-gray-700">
+            Description
+          </label>
           <Input
-            // as="textarea"
             id="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             className="rounded-xl mt-2 border-gray-400"
             placeholder="Enter Description"
-            // rows={6}
           />
-          {/* Add rich text editor here */}
         </div>
         <div>
-          <button type="submit" className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-            Submit {isLoading &&  <Loader/>} 
+          <label htmlFor="coverImage" className="block text-sm text-gray-700">
+            Cover Image
+          </label>
+          <input
+            type="file"
+            id="coverImage"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="mt-2"
+          />
+          {preview && (
+            <Image
+              height={20}
+              width={20}
+              src={preview}
+              alt="Cover Preview"
+              className="mt-4 w-full h-48 object-cover rounded-lg shadow-md"
+            />
+          )}
+        </div>
+        <div>
+          <button
+            type="submit"
+            className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            <div className="flex gap-3">
+              <div className="">Submit</div>
+              {isLoading && <Loader isButton />}  
+            </div>
+            <Toaster />
           </button>
         </div>
       </form>

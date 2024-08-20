@@ -1,49 +1,65 @@
 "use client";
-import React, { useState, useEffect, ChangeEvent, useRef } from "react";
+import React, { useState, useEffect, ChangeEvent } from "react";
 import { FaFileExcel, FaEye, FaPrint, FaPlusCircle } from "react-icons/fa";
 import { useRouter } from "next/navigation";
+import { BACKEND_URl } from "@/constants";
+import toast from "react-hot-toast";
+import Loader from "./Loader";
+import Image from "next/image";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { FiEdit } from "react-icons/fi";
+import { MdDeleteOutline } from "react-icons/md";
+import DeleteModal from "@/components/DeleteModal"; // Assuming you have a DeleteModal component like in the EnquiryTable
+import EditArticleModal from "./EditArticleModal";
+// import EditModal from "@/components/EditModal"; // Assuming you have an EditModal component
 
 interface Article {
   id: number;
   title: string;
   user: string;
   category: string;
+  coverImage: string;
   createdAt: string;
   description: string;
 }
 
-const Table: React.FC = () => {
+const ArticleTable: React.FC = () => {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [data, setData] = useState<Article[]>([]);
   const [filteredData, setFilteredData] = useState<Article[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [entriesPerPage, setEntriesPerPage] = useState<number>(10);
-  const [visibleDropdown, setVisibleDropdown] = useState<number | null>(null);
-  const dropdownRef = useRef<HTMLDivElement | null>(null);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [showModal, setShowModal] = useState<boolean>(false);
   const [editModal, setEditModal] = useState<boolean>(false);
   const [deleteModal, setDeleteModal] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [editLoading, setEditLoading] = useState<boolean>(false);
+  const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
+  const [viewLoading, setViewLoading] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setIsLoading(false);
-        const response = await fetch(
-          "http://localhost:9999/api/v1/admin/articles"
-        );
+        setIsLoading(true);
+        const response = await fetch(BACKEND_URl + "/admin/articles");
         if (!response.ok) {
           throw new Error("Network response was not ok");
         }
         const result = await response.json();
-        // Ensure the result is an array
         if (Array.isArray(result.articles)) {
           setData(result.articles);
           setFilteredData(result.articles);
         } else {
-          console.error("Fetched data is not an array:", result);
           setData([]);
           setFilteredData([]);
         }
@@ -52,27 +68,12 @@ const Table: React.FC = () => {
         setData([]);
         setFilteredData([]);
       } finally {
-        setIsLoading(true);
+        setIsLoading(false);
       }
     };
     fetchData();
   }, []);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setVisibleDropdown(null);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
   useEffect(() => {
     const filtered = data.filter((item) => {
       const title = item.title?.toLowerCase() ?? "";
@@ -97,6 +98,7 @@ const Table: React.FC = () => {
   const currentEntries = Array.isArray(filteredData)
     ? filteredData.slice(indexOfFirstEntry, indexOfLastEntry)
     : [];
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
@@ -114,21 +116,10 @@ const Table: React.FC = () => {
     setEntriesPerPage(Number(event.target.value));
   };
 
-  const truncateDescription = (description: string) => {
-    // const words = description.split(' ');
-    // return words.length > 10 ? words.slice(0, 10).join(' ') + ' ......' : description;
-    return description;
-  };
-
-  const toggleDropdown = (id: number) => {
-    setVisibleDropdown(visibleDropdown === id ? null : id);
-  };
-
   const handleShow = async (id: number) => {
     try {
-      const response = await fetch(
-        `http://localhost:9999/api/v1/admin/articles/${id}`
-      );
+      setViewLoading(true);
+      const response = await fetch(BACKEND_URl + `/admin/articles/${id}`);
       if (!response.ok) {
         throw new Error("Network response was not ok");
       }
@@ -137,6 +128,8 @@ const Table: React.FC = () => {
       setShowModal(true);
     } catch (error) {
       console.error("Failed to fetch article:", error);
+    } finally {
+      setViewLoading(false);
     }
   };
 
@@ -148,8 +141,9 @@ const Table: React.FC = () => {
   const handleDelete = async () => {
     if (selectedArticle) {
       try {
+        setDeleteLoading(true);
         const response = await fetch(
-          `http://localhost:9999/api/v1/admin/articles/${selectedArticle.id}`,
+          BACKEND_URl + `/admin/articles/${selectedArticle.id}`,
           {
             method: "DELETE",
           }
@@ -165,6 +159,9 @@ const Table: React.FC = () => {
         setSelectedArticle(null);
       } catch (error) {
         console.error("Failed to delete article:", error);
+      } finally {
+        toast.success("Article deleted successfully");
+        setDeleteLoading(false);
       }
     }
   };
@@ -182,7 +179,7 @@ const Table: React.FC = () => {
         </button>
       </div>
       <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center space-x-2">
+        <div className="flex  items-center space-x-2">
           <label htmlFor="entries" className="text-sm text-gray-700">
             Show
           </label>
@@ -223,7 +220,7 @@ const Table: React.FC = () => {
         />
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
+        <table className="w-full  text-left border-collapse">
           <thead>
             <tr>
               <th className="border-b p-2">#</th>
@@ -235,140 +232,114 @@ const Table: React.FC = () => {
               <th className="border-b p-2">Created At</th>
             </tr>
           </thead>
-          {isLoading && (
-            <tbody>
-              {currentEntries.map((item, index) => (
+          <tbody>
+            {isLoading ? (
+              <tr>
+                <td colSpan={7} className="text-center p-4">
+                  <Loader />
+                </td>
+              </tr>
+            ) : (
+              currentEntries.map((item, index) => (
                 <tr key={item.id}>
                   <td className="border-b p-2">
                     {indexOfFirstEntry + index + 1}
                   </td>
                   <td className="border-b p-2 relative">
-                    <button
-                      className="bg-gray-200 text-gray-800 px-3 py-1 rounded"
-                      onClick={() => toggleDropdown(item.id)}
-                    >
-                      Action
-                    </button>
-                    {visibleDropdown === item.id && (
-                      <div
-                        ref={dropdownRef}
-                        className="absolute z-10 bg-white border rounded shadow-md mt-1"
-                      >
-                        <button
-                          className="block hover:bg-gray-200 w-full text-left px-4 py-2 text-sm"
-                          onClick={() => handleShow(item.id)}
-                        >
-                          Show
-                        </button>
-                        <button
-                          className="block hover:bg-gray-200 w-full text-left px-4 py-2 text-sm"
-                          onClick={() => handleEdit(item)}
-                        >
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" className="text-black bg-white">
+                          Actions
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="bg-white">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => handleShow(item.id)}>
+                          <FaEye className="mr-2" />
+                          View
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleEdit(item)}>
+                          <FiEdit className="mr-2" />
                           Edit
-                        </button>
-                        <button
-                          className="block hover:bg-gray-200 w-full text-left px-4 py-2 text-sm"
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
                           onClick={() => {
                             setSelectedArticle(item);
                             setDeleteModal(true);
                           }}
                         >
+                          <MdDeleteOutline className="mr-2" />
                           Delete
-                        </button>
-                      </div>
-                    )}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </td>
                   <td className="border-b p-2">{item.title}</td>
                   <td className="border-b p-2">{item.user}</td>
                   <td className="border-b p-2">{item.category}</td>
-                  <td className="border-b p-2">
-                    {truncateDescription(item.description)}
-                  </td>
+                  <td className="border-b p-2">{item.description}</td>
                   <td className="border-b p-2">{formatDate(item.createdAt)}</td>
                 </tr>
-              ))}
-            </tbody>
-          )}
+              ))
+            )}
+          </tbody>
         </table>
       </div>
       <div className="flex justify-between items-center mt-4">
-        <p className="text-sm text-gray-700">
+        <div className="text-sm text-gray-700">
           Showing {indexOfFirstEntry + 1} to{" "}
           {Math.min(indexOfLastEntry, filteredData.length)} of{" "}
           {filteredData.length} entries
-        </p>
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-            className={`px-4 py-2 ${
-              currentPage === 1
-                ? "text-gray-300 bg-gray-100"
-                : "text-gray-600 bg-gray-200"
-            } rounded`}
-          >
-            Previous
-          </button>
+        </div>
+        <div className="flex space-x-2">
           {Array.from(
             { length: Math.ceil(filteredData.length / entriesPerPage) },
-            (_, number) => (
-              <button
-                key={number + 1}
-                onClick={() => handlePageChange(number + 1)}
-                className={`px-4 py-2 ${
-                  currentPage === number + 1
-                    ? "text-white bg-blue-500"
-                    : "text-gray-600 bg-gray-200"
-                } rounded`}
-              >
-                {number + 1}
-              </button>
-            )
-          )}
-          <button
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={
-              currentPage === Math.ceil(filteredData.length / entriesPerPage)
-            }
-            className={`px-4 py-2 ${
-              currentPage === Math.ceil(filteredData.length / entriesPerPage)
-                ? "text-gray-300 bg-gray-100"
-                : "text-gray-600 bg-gray-200"
-            } rounded`}
-          >
-            Next
-          </button>
+            (_, i) => i + 1
+          ).map((pageNumber) => (
+            <button
+              key={pageNumber}
+              className={`px-4 py-2 border ${
+                pageNumber === currentPage
+                  ? "bg-blue-500 text-white"
+                  : "bg-white text-gray-700"
+              }`}
+              onClick={() => handlePageChange(pageNumber)}
+            >
+              {pageNumber}
+            </button>
+          ))}
         </div>
       </div>
 
+      {/* View Modal */}
       {showModal && selectedArticle && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 md:p-8 lg:p-10 rounded-lg shadow-2xl max-w-3xl w-full">
-            <h2 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800">
-              Article Details
-            </h2>
-            <div className="space-y-4">
-              <p className="text-lg">
-                <strong>Title:</strong> {selectedArticle.title}
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white rounded-lg p-4 w-full max-w-2xl">
+            <h2 className="text-lg font-semibold mb-4">Article Details</h2>
+            <div className="flex flex-col items-center mb-4">
+              <div className="mb-4">
+                <Image
+                  src={selectedArticle.coverImage}
+                  alt="Cover Image"
+                  width={400}
+                  height={200}
+                  className="object-cover rounded-md"
+                />
+              </div>
+              <h3 className="text-xl font-bold mb-2">{selectedArticle.title}</h3>
+              <p className="text-gray-700 mb-4">{selectedArticle.description}</p>
+              <p className="text-sm text-gray-500">
+                Created by: {selectedArticle.user}
               </p>
-              <p className="text-lg">
-                <strong>User:</strong> {selectedArticle.user}
-              </p>
-              <p className="text-lg">
-                <strong>Category:</strong> {selectedArticle.category}
-              </p>
-              <p className="text-lg">
-                <strong>Description:</strong> {selectedArticle.description}
-              </p>
-              <p className="text-lg">
-                <strong>Created At:</strong>{" "}
-                {formatDate(selectedArticle.createdAt)}
+              <p className="text-sm text-gray-500">
+                Created at: {formatDate(selectedArticle.createdAt)}
               </p>
             </div>
-            <div className="mt-8 flex justify-end">
+            <div className="flex justify-end space-x-2">
               <button
                 onClick={() => setShowModal(false)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg focus:outline-none transition duration-300 ease-in-out"
+                className="bg-gray-300 text-black p-2 rounded"
               >
                 Close
               </button>
@@ -377,158 +348,29 @@ const Table: React.FC = () => {
         </div>
       )}
 
+      {/* Edit Modal */}
       {editModal && selectedArticle && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 md:p-8 lg:p-10 rounded-lg shadow-2xl max-w-3xl w-full">
-            <h2 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800">
-              Edit Article
-            </h2>
-            <form
-              onSubmit={async (e) => {
-                e.preventDefault();
-                // Perform the edit operation
-                try {
-                  const response = await fetch(
-                    `http://localhost:9999/api/v1/admin/articles/${selectedArticle.id}`,
-                    {
-                      method: "PUT",
-                      headers: {
-                        "Content-Type": "application/json",
-                      },
-                      body: JSON.stringify(selectedArticle),
-                    }
-                  );
-                  if (!response.ok) {
-                    throw new Error("Network response was not ok");
-                  }
-                  const updatedArticle = await response.json();
-                  setData(
-                    data.map((article) =>
-                      article.id === selectedArticle.id
-                        ? updatedArticle
-                        : article
-                    )
-                  );
-                  setFilteredData(
-                    filteredData.map((article) =>
-                      article.id === selectedArticle.id
-                        ? updatedArticle
-                        : article
-                    )
-                  );
-                  setEditModal(false);
-                  setSelectedArticle(null);
-                } catch (error) {
-                  console.error("Failed to update article:", error);
-                }
-              }}
-            >
-              <div className="mb-6">
-                <label
-                  htmlFor="title"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Title
-                </label>
-                <input
-                  id="title"
-                  type="text"
-                  value={selectedArticle.title}
-                  onChange={(e) =>
-                    setSelectedArticle({
-                      ...selectedArticle,
-                      title: e.target.value,
-                    })
-                  }
-                  className="mt-2 p-3 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              <div className="mb-6">
-                <label
-                  htmlFor="category"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Category
-                </label>
-                <input
-                  id="category"
-                  type="text"
-                  value={selectedArticle.category}
-                  onChange={(e) =>
-                    setSelectedArticle({
-                      ...selectedArticle,
-                      category: e.target.value,
-                    })
-                  }
-                  className="mt-2 p-3 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              <div className="mb-6">
-                <label
-                  htmlFor="description"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Description
-                </label>
-                <textarea
-                  id="description"
-                  value={selectedArticle.description}
-                  onChange={(e) =>
-                    setSelectedArticle({
-                      ...selectedArticle,
-                      description: e.target.value,
-                    })
-                  }
-                  className="mt-2 p-3 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              <div className="flex justify-end space-x-4">
-                <button
-                  type="submit"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg focus:outline-none transition duration-300 ease-in-out"
-                >
-                  Save Changes
-                </button>
-                <button
-                  onClick={() => setEditModal(false)}
-                  className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg focus:outline-none transition duration-300 ease-in-out"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <EditArticleModal
+          article={selectedArticle}
+          setEditModal={setEditModal}
+          setData={setData}
+          setFilteredData={setFilteredData}
+        />
       )}
 
-      {deleteModal && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 md:p-8 lg:p-10 rounded-lg shadow-2xl max-w-lg w-full">
-            <h2 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800">
-              Confirm Delete
-            </h2>
-            <p className="text-lg mb-8">
-              Are you sure you want to delete this article?
-            </p>
-            <div className="flex justify-end space-x-4">
-              <button
-                onClick={handleDelete}
-                className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg focus:outline-none transition duration-300 ease-in-out"
-              >
-                Yes, Delete
-              </button>
-              <button
-                onClick={() => setDeleteModal(false)}
-                className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg focus:outline-none transition duration-300 ease-in-out"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Delete Modal */}
+      {deleteModal && selectedArticle && (
+        <DeleteModal
+          item={selectedArticle}
+          onClose={() => setDeleteModal(false)}
+          onConfirm={handleDelete}
+          isLoading={deleteLoading}
+          title="Delete Article"
+          description="Are you sure you want to delete this article? This action cannot be undone."
+        />
       )}
     </div>
   );
 };
 
-export default Table;
+export default ArticleTable;
