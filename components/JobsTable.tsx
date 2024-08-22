@@ -17,7 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { FiEdit } from "react-icons/fi";
 import { MdDeleteOutline } from "react-icons/md";
-
+import DeleteModal from "./DeleteModal";
 interface Job {
   id: number;
   companyName: string;
@@ -49,6 +49,11 @@ const JobsTable: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [editLoading, setEditLoading] = useState<boolean>(false);
   const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const toggleExpand = () => {
+    setIsExpanded(!isExpanded);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -147,7 +152,7 @@ const JobsTable: React.FC = () => {
         throw new Error("Network response was not ok");
       }
       const job = await response.json();
-      setSelectedJob(job);
+      setSelectedJob(job?.job);
       setShowModal(true);
     } catch (error) {
       console.error("Failed to fetch job:", error);
@@ -261,42 +266,40 @@ const JobsTable: React.FC = () => {
                 </td>
               </tr>
             ) : (
-              currentEntries.map((item, index) => (
+              currentEntries.map((item: any, index) => (
                 <tr key={item.id}>
                   <td className="border-b p-2">
                     {indexOfFirstEntry + index + 1}
                   </td>
                   <td className="border-b p-2 relative">
-                  <DropdownMenu>
+                    <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="px-3 py-1  bg-gray-200 text-gray-800  rounded-md hover:bg-gray-300 ">
+                        <Button
+                          variant="ghost"
+                          className="px-3 py-1  bg-gray-200 text-gray-800  rounded-md hover:bg-gray-300"
+                        >
                           Actions
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent className="bg-white">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => handleShow(item.id)}
-                          className="cursor-pointer"
-                        >
-                          <FaEye className="mr-2" /> View
+                        <DropdownMenuItem onClick={() => handleShow(item.id)}>
+                          <FaEye className="mr-2" />
+                          View
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleEdit(item)}
-                          className="cursor-pointer"
-                        >
-                          <FiEdit className="mr-2"/>
+                        <DropdownMenuItem onClick={() => handleEdit(item)}>
+                          <FiEdit className="mr-2" />
                           Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => {
                             setDeleteModal(true);
+                            setSelectedJob(item);
                           }}
-                          className="cursor-pointer"
                         >
-                         <MdDeleteOutline size={16} className="mr-2" />
-                         Delete
+                          <MdDeleteOutline className="mr-2" />
+                          Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -304,7 +307,10 @@ const JobsTable: React.FC = () => {
                   <td className="border-b p-2">{item.jobTitle}</td>
                   <td className="border-b p-2">{item.companyName}</td>
                   <td className="border-b p-2">{item.category}</td>
-                  <td className="border-b p-2">{item.jobDescription}</td>
+                  <td className="border-b p-2">
+                    {item.jobDescription.split(" ").slice(0, 3).join(" ")}{" "}
+                    {item.jobDescription.split(" ").length > 3 && "..."}
+                  </td>
                   <td className="border-b p-2">{formatDate(item.createdAt)}</td>
                 </tr>
               ))
@@ -340,35 +346,75 @@ const JobsTable: React.FC = () => {
         </div>
       )}
       {showModal && selectedJob && (
-        <div className="fixed inset-0  bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">
-              {selectedJob.jobTitle}
-            </h2>
-            <p>
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-md w-full max-w-lg">
+            <h2 className="text-xl font-semibold mb-4">Job Details</h2>
+            <p className="mb-2">
+              <strong>Job Title:</strong> {selectedJob.jobTitle}
+            </p>
+            <p className="mb-2">
               <strong>Company Name:</strong> {selectedJob.companyName}
             </p>
-            <p>
+            <p className="mb-2">
               <strong>Category:</strong> {selectedJob.category}
             </p>
-            <p>
-              <strong>Description:</strong> {selectedJob.jobDescription}
+            <p className="mb-2">
+              <strong>Salary Range:</strong> {selectedJob.salaryRange}
             </p>
-            <p>
+            <p className="mb-2">
+              <strong>Job Location:</strong> {selectedJob.jobLocation}
+            </p>
+            <p className="mb-2">
+              <strong>Contact Number:</strong> {selectedJob.contactNumber}
+            </p>
+            <p className="mb-2">
+              <strong>Open Till:</strong> {formatDate(selectedJob.openTill)}
+            </p>
+            <p className="mb-2">
               <strong>Created At:</strong> {formatDate(selectedJob.createdAt)}
             </p>
-            <button
-              className="mt-4 bg-red-500 text-white px-4 py-2 rounded"
-              onClick={() => setShowModal(false)}
-            >
-              Close
-            </button>
+            <p className="mb-2">
+              <strong>Description:</strong>
+              <div>
+                <p className="text-gray-700  max-h-48 overflow-y-auto  border-gray-300 rounded">
+                  {!isExpanded &&
+                    `${selectedJob.jobDescription
+                      .split(" ")
+                      .slice(0, 5)
+                      .join(" ")} ${
+                      selectedJob.jobDescription.split(" ").length > 20 && "..."
+                    }`}
+                </p>
+                {isExpanded && (
+                  <div className=" max-h-48 overflow-y-auto  border-gray-300 rounded">
+                    <p>{selectedJob.jobDescription}</p>
+                  </div>
+                )}
+                {selectedJob.jobDescription.split(" ").length > 20 && (
+                  <button
+                    onClick={toggleExpand}
+                    className="text-blue-500 hover:underline  text-sm "
+                  >
+                    {isExpanded ? "View Less" : "View More"}
+                  </button>
+                )}
+              </div>
+            </p>
+
+            <div className="flex justify-end mt-4">
+              <button
+                onClick={() => setShowModal(false)}
+                className="px-4 py-2 bg-gray-500 text-white rounded"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
       {editModal && selectedJob && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white w-1/2 p-6 rounded shadow-lg">
+          <div className="bg-white p-6 flex flex-col gap-2 rounded shadow-lg">
             <h2 className="text-lg font-semibold mb-4">Edit Job</h2>
             <form
               onSubmit={async (e) => {
@@ -400,47 +446,130 @@ const JobsTable: React.FC = () => {
                     )
                   );
                   setEditModal(false);
+                  toast.success("Edited Successfully");
                 } catch (error) {
                   console.error("Failed to update job:", error);
                 } finally {
                   setEditLoading(false);
-                  toast.success("Edited Successfully");
                 }
               }}
             >
-              <div className="mb-4">
-                <label className="block text-gray-700">Job Title</label>
-                <input
-                  type="text"
-                  className="p-2 border rounded w-full"
-                  value={selectedJob.jobTitle}
-                  onChange={(e) =>
-                    setSelectedJob({ ...selectedJob, jobTitle: e.target.value })
-                  }
-                />
+              <div className="flex gap-4">
+                <div className="mb-4">
+                  <label className="block text-gray-700">Job Title</label>
+                  <input
+                    type="text"
+                    className="p-2 border rounded w-full"
+                    value={selectedJob.jobTitle}
+                    onChange={(e) =>
+                      setSelectedJob({
+                        ...selectedJob,
+                        jobTitle: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-gray-700">Company Name</label>
+                  <input
+                    type="text"
+                    className="p-2 border rounded w-full"
+                    value={selectedJob.companyName}
+                    onChange={(e) =>
+                      setSelectedJob({
+                        ...selectedJob,
+                        companyName: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+              </div>
+              <div className="flex gap-4">
+                <div className="mb-4">
+                  <label className="block text-gray-700">Salary Range</label>
+                  <input
+                    type="text"
+                    className="p-2 border rounded w-full"
+                    value={selectedJob.salaryRange}
+                    onChange={(e) =>
+                      setSelectedJob({
+                        ...selectedJob,
+                        salaryRange: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-gray-700">Vacancy</label>
+                  <input
+                    type="number"
+                    className="p-2 border rounded w-full"
+                    value={selectedJob.vacancy}
+                    onChange={(e) =>
+                      setSelectedJob({
+                        ...selectedJob,
+                        vacancy: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+              </div>
+              <div className="flex gap-4">
+                <div className="mb-4">
+                  <label className="block text-gray-700">Job Type</label>
+                  <input
+                    type="text"
+                    className="p-2 border rounded w-full"
+                    value={selectedJob.jobType}
+                    onChange={(e) =>
+                      setSelectedJob({
+                        ...selectedJob,
+                        jobType: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-gray-700">Job Location</label>
+                  <input
+                    type="text"
+                    className="p-2 border rounded w-full"
+                    value={selectedJob.jobLocation}
+                    onChange={(e) =>
+                      setSelectedJob({
+                        ...selectedJob,
+                        jobLocation: e.target.value,
+                      })
+                    }
+                  />
+                </div>
               </div>
               <div className="mb-4">
-                <label className="block text-gray-700">Company Name</label>
+                <label className="block text-gray-700">Contact Number</label>
                 <input
                   type="text"
                   className="p-2 border rounded w-full"
-                  value={selectedJob.companyName}
+                  value={selectedJob.contactNumber}
                   onChange={(e) =>
                     setSelectedJob({
                       ...selectedJob,
-                      companyName: e.target.value,
+                      //@ts-ignore
+                      contactNumber: e.target.value,
                     })
                   }
                 />
               </div>
               <div className="mb-4">
-                <label className="block text-gray-700">Category</label>
+                <label className="block text-gray-700">Open Till</label>
                 <input
-                  type="text"
+                  type="date"
                   className="p-2 border rounded w-full"
-                  value={selectedJob.category}
+                  value={selectedJob.openTill}
                   onChange={(e) =>
-                    setSelectedJob({ ...selectedJob, category: e.target.value })
+                    setSelectedJob({
+                      ...selectedJob,
+                      openTill: e.target.value,
+                    })
                   }
                 />
               </div>
@@ -462,7 +591,7 @@ const JobsTable: React.FC = () => {
                 className="bg-blue-500 text-white px-4 py-2 rounded"
               >
                 <div className="flex justify-center items-center">
-                  Save Changes {editLoading && <ButtonLoader />}
+                  Save Changes {editLoading && <Loader isButton />}
                 </div>
               </button>
               <button
@@ -476,31 +605,16 @@ const JobsTable: React.FC = () => {
           </div>
         </div>
       )}
-      {deleteModal && (
-           <div className="fixed inset-0 z-50 flex items-center justify-center">
-           <div className="absolute inset-0 bg-gray-900 opacity-50"></div>
-           <div className="bg-white p-6 w-1/3 rounded-lg shadow-lg z-10 max-w-md">
-             <h2 className="text-xl font-semibold mb-4">Delete Enquiry</h2>
-             <p>
-               Are you sure you want to delete ths Job!!
-             </p>
-             <div className="mt-4 flex ">
-               <button
-                 onClick={() => setDeleteModal(false)}
-                 className="bg-gray-500 text-white p-2 rounded mr-2"
-               >
-                 Cancel
-               </button>
-               <button
-                 onClick={handleDelete}
-                 className="bg-red-500 text-white p-2 rounded flex items-center"
-                 disabled={deleteLoading}
-               >
-                 {deleteLoading ? <Loader isButton/> : "Delete"}
-               </button>
-             </div>
-           </div>
-         </div>
+
+      {deleteModal && selectedJob && (
+        <DeleteModal
+          item={selectedJob}
+          onClose={() => setDeleteModal(false)}
+          onConfirm={handleDelete}
+          isLoading={deleteLoading}
+          title="Delete Article"
+          description="Are you sure you want to delete this article? This action cannot be undone."
+        />
       )}
     </div>
   );

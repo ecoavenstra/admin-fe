@@ -53,7 +53,7 @@ const AddArticle: React.FC = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:9999/api/v1/admin/articles",
+        "https://ecoavenstra-be.onrender.com/api/v1/admin/articles",
         {
           method: "POST",
           body: formData,
@@ -167,11 +167,12 @@ const AddArticle: React.FC = () => {
           <label htmlFor="description" className="block text-sm text-gray-700">
             Description
           </label>
-          <Input
+          <textarea
+          rows={4}
             id="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="rounded-xl mt-2 border-gray-400"
+            className="rounded-xl mt-2 border-gray-800 w-full p-2 border"
             placeholder="Enter Description"
           />
         </div>

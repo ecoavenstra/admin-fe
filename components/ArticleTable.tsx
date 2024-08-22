@@ -46,6 +46,11 @@ const ArticleTable: React.FC = () => {
   const [editLoading, setEditLoading] = useState<boolean>(false);
   const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
   const [viewLoading, setViewLoading] = useState<boolean>(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const toggleExpand = () => {
+    setIsExpanded(!isExpanded);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -248,7 +253,10 @@ const ArticleTable: React.FC = () => {
                   <td className="border-b p-2 relative">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="text-black bg-white">
+                        <Button
+                          variant="ghost"
+                          className="px-3 py-1  bg-gray-200 text-gray-800  rounded-md hover:bg-gray-300"
+                        >
                           Actions
                         </Button>
                       </DropdownMenuTrigger>
@@ -278,7 +286,9 @@ const ArticleTable: React.FC = () => {
                   <td className="border-b p-2">{item.title}</td>
                   <td className="border-b p-2">{item.user}</td>
                   <td className="border-b p-2">{item.category}</td>
-                  <td className="border-b p-2">{item.description}</td>
+                  <td className="border-b p-2">
+                    {item.description.split(" ").slice(0, 5).join(" ")}...
+                  </td>
                   <td className="border-b p-2">{formatDate(item.createdAt)}</td>
                 </tr>
               ))
@@ -318,17 +328,48 @@ const ArticleTable: React.FC = () => {
           <div className="bg-white rounded-lg p-4 w-full max-w-2xl">
             <h2 className="text-lg font-semibold mb-4">Article Details</h2>
             <div className="flex flex-col items-center mb-4">
-              <div className="mb-4">
-                <Image
-                  src={selectedArticle.coverImage}
-                  alt="Cover Image"
-                  width={400}
-                  height={200}
-                  className="object-cover rounded-md"
-                />
-              </div>
-              <h3 className="text-xl font-bold mb-2">{selectedArticle.title}</h3>
-              <p className="text-gray-700 mb-4">{selectedArticle.description}</p>
+              {selectedArticle.coverImage && (
+                <div className="mb-4">
+                  <Image
+                    src={selectedArticle.coverImage}
+                    alt="Cover Image"
+                    width={400}
+                    height={100}
+                    className="object-cover rounded-md"
+                  />
+                </div>
+              )}
+
+              <h3 className="text-xl font-bold mb-2">
+                {selectedArticle.title}
+              </h3>
+              <p className="text-gray-700 mb-4">
+                <div>
+                  <p className="text-gray-700  max-h-48 overflow-y-auto  border-gray-300 rounded">
+                    {!isExpanded &&
+                      `${selectedArticle.description
+                        .split(" ")
+                        .slice(0, 5)
+                        .join(" ")} ${
+                        selectedArticle.description.split(" ").length > 20 &&
+                        "..."
+                      }`}
+                  </p>
+                  {isExpanded && (
+                    <div className=" max-h-48 overflow-y-auto  border-gray-300 rounded">
+                      <p>{selectedArticle.description}</p>
+                    </div>
+                  )}
+                  {selectedArticle.description.split(" ").length > 20 && (
+                    <button
+                      onClick={toggleExpand}
+                      className="text-blue-500 hover:underline  text-sm "
+                    >
+                      {isExpanded ? "View Less" : "View More"}
+                    </button>
+                  )}
+                </div>
+              </p>
               <p className="text-sm text-gray-500">
                 Created by: {selectedArticle.user}
               </p>

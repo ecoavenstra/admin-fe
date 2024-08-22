@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Input } from "@/components/ui/input";
-import Loader  from './ButtonLoader';
+import Loader  from './Loader';
 import toast, { Toaster } from "react-hot-toast";
 
 import { BACKEND_URl } from '@/constants';
@@ -35,12 +35,12 @@ const AddJob: React.FC = () => {
       jobType, 
       jobLocation, 
       jobDescription, 
-      contactNumber: parseInt(contactNumber, 10), 
+      contactNumber, 
       openTill 
     };
     console.log(jobData);
     try {
-      const response = await fetch(BACKEND_URl +'/admin/jobs', {
+      const response = await fetch('https://ecoavenstra-be.onrender.com/api/v1/admin/jobs', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -54,12 +54,13 @@ const AddJob: React.FC = () => {
 
       const responseData = await response.json();
       console.log('Job successfully submitted:', responseData);
+      toast.success('Job added successfully!')
       // Handle success (e.g., display a success message, redirect to another page)
     } catch (error) {
       console.error('Failed to submit job:', error);
       // Handle error (e.g., display an error message)
+      toast.error('Somethng went wrong!')
     } finally {
-      toast.success('Job added successfully!')
       setIsLoading(false);
       route.push('/manage/jobs')
     }
@@ -178,20 +179,20 @@ const AddJob: React.FC = () => {
         </div>
         <div>
           <label htmlFor="jobDescription" className="block text-sm text-gray-700">Job Description</label>
-          <Input
+          <textarea
             // as="textarea"
             id="jobDescription"
             value={jobDescription}
             onChange={(e) => setJobDescription(e.target.value)}
-            className="rounded-xl mt-2 border-gray-400"
+            className="rounded-xl mt-2 border w-full p-2 border-gray-400"
             placeholder="Enter Job Description"
-            // rows={6}
+            rows={6}
           />
           {/* Add rich text editor here if needed */}
         </div>
         <div>
           <button type="submit" className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-            Submit {isLoading && <Loader />} 
+            Submit {isLoading && <Loader isButton/>} 
           </button>
         </div>
       </form>

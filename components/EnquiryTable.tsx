@@ -51,7 +51,10 @@
         try {
           setIsLoading(true);
           const response = await fetch(BACKEND_URl + "/admin/enquiries");
+          // const response = await fetch("http://localhost:9999/api/v1/admin/enquiries");
+
           if (!response.ok) {
+
             throw new Error("Network response was not ok");
           }
           const result = await response.json();
@@ -374,9 +377,8 @@
                   value={selectedEnquiry?.status}
                   onChange={(e) => handleStatusChange(e.target.value)}
                 >
-                  <option value="Pending">Pending</option>
-                  <option value="Resolved">Resolved</option>
-                  <option value="Closed">Closed</option>
+                  <option value="pending">pending</option>
+                  <option value="resolved">resolved</option>
                 </select>
               </div>
               <div className="mt-4 flex">

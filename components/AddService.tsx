@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
-import Loader from "./ButtonLoader";
+import Loader from "./Loader";
 import toast, { Toaster } from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { BACKEND_URl } from "@/constants";
@@ -49,7 +49,7 @@ const AddService: React.FC = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-4 bg-white mt-2">
+    <div className="max-w-2xl mx-auto p-4 bg-white mt-2 mb-7">
       <h1 className="text-2xl font-bold mb-4">Add Service</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
@@ -101,14 +101,14 @@ const AddService: React.FC = () => {
           <label htmlFor="description" className="block text-sm text-gray-700">
             Description
           </label>
-          <Input
+          <textarea
             // as="textarea"
             id="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="rounded-xl mt-2 border-gray-400"
+            className="rounded-xl mt-2 border p-2 w-full border-gray-400"
             placeholder="Enter Description"
-            // rows={6}
+            rows={6}
           />
           {/* Add rich text editor here if needed */}
         </div>
@@ -117,7 +117,7 @@ const AddService: React.FC = () => {
             type="submit"
             className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
-            Submit {isLoading && <Loader />}
+            Submit {isLoading && <Loader isButton/>}
           </button>
         </div>
       </form>

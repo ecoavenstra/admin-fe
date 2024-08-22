@@ -44,6 +44,11 @@ const ServiceTable: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [editLoading, setEditLoading] = useState<boolean>(false);
   const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const toggleExpand = () => {
+    setIsExpanded(!isExpanded);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -255,9 +260,12 @@ const ServiceTable: React.FC = () => {
                   <td className="border-b p-2">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="px-3 py-1  bg-gray-200 text-gray-800  rounded-md hover:bg-gray-300 ">
-                            Actions
-                          </Button>
+                        <Button
+                          variant="ghost"
+                          className="px-3 py-1  bg-gray-200 text-gray-800  rounded-md hover:bg-gray-300 "
+                        >
+                          Actions
+                        </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent className="w-24 bg-white">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
@@ -291,8 +299,12 @@ const ServiceTable: React.FC = () => {
                   </td>
                   <td className="border-b p-2">{item.title}</td>
                   <td className="border-b p-2">{item.type}</td>
-                  <td className="border-b p-2">{item.shortDescription}</td>
-                  <td className="border-b p-2">{item.description}</td>
+                  <td className="border-b p-2">
+                    {item.shortDescription.split(" ").slice(0, 4).join(" ")}...
+                  </td>
+                  <td className="border-b p-2">
+                    {item.description.split(" ").slice(0, 4).join(" ")}...
+                  </td>
                   <td className="border-b p-2">{formatDate(item.createdAt)}</td>
                 </tr>
               ))
@@ -325,12 +337,11 @@ const ServiceTable: React.FC = () => {
         </div>
       </div>
 
-    
-     {deleteModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {deleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-gray-900 opacity-50"></div>
           <div className="bg-white p-6 w-1/3 rounded-lg shadow-lg z-10 max-w-md">
-          <h2 className="text-xl font-semibold mb-4">Confirm Delete</h2>
+            <h2 className="text-xl font-semibold mb-4">Confirm Delete</h2>
             <p>Are you sure you want to delete this service?</p>
             <div className="flex justify-end mt-4">
               <button
@@ -348,13 +359,13 @@ const ServiceTable: React.FC = () => {
             </div>
           </div>
         </div>
-        )}
+      )}
       {/* Edit Modal */}
       {editModal && selectedService && (
-       <div className="fixed inset-0 z-50 flex items-center justify-center">
-       <div className="absolute inset-0 bg-gray-900 opacity-50"></div>
-       <div className="bg-white p-6 w-1/2 rounded-lg shadow-lg z-10 max-w-md">
-       <h2 className="text-xl font-semibold mb-4">Edit Service</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-gray-900 opacity-50"></div>
+          <div className="bg-white p-6 w-1/2 rounded-lg shadow-lg z-10 max-w-md">
+            <h2 className="text-xl font-semibold mb-4">Edit Service</h2>
             <form
               onSubmit={async (e) => {
                 e.preventDefault();
@@ -490,8 +501,8 @@ const ServiceTable: React.FC = () => {
                 </button>
               </div>
             </form>
-       </div>
-     </div>
+          </div>
+        </div>
       )}
 
       {/* View Modal */}
@@ -510,7 +521,30 @@ const ServiceTable: React.FC = () => {
               {selectedService.shortDescription}
             </p>
             <p>
-              <strong>Description:</strong> {selectedService.description}
+              <strong>Description:</strong>{" "}
+              <div>
+                <p className="text-gray-700 ">
+                  {!isExpanded &&
+                    `${selectedService.description
+                      .split(" ")
+                      .slice(0, 10)
+                      .join(" ")}...`}
+                </p>
+                {isExpanded && (
+                  <div className=" max-h-48 overflow-y-auto p-2  border-gray-300 rounded">
+                    <p>{selectedService.description}</p>
+                  </div>
+                )}
+                {selectedService.description.split(" ").length > 20 && (
+                  <button
+                    onClick={toggleExpand}
+                    className="text-blue-500 hover:underline text-xs ml-1"
+                  >
+                    {isExpanded ? "View Less" : "View More"}
+                  </button>
+                )}
+               
+              </div>
             </p>
             <p>
               <strong>Created At:</strong>{" "}

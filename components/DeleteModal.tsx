@@ -1,4 +1,5 @@
 import React from "react";
+import Loader from "./Loader";
 
 interface DeleteModalProps {
   item: any; // This could be an article, enquiry, etc.
@@ -35,7 +36,7 @@ const DeleteModal: React.FC<DeleteModalProps> = ({
             className="bg-red-500 text-white p-2 rounded"
             disabled={isLoading}
           >
-            {isLoading ? "Deleting..." : "Delete"}
+            {isLoading ? <Loader isButton/> : "Delete"}
           </button>
         </div>
       </div>
