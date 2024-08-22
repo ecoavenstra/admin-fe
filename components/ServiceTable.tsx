@@ -51,6 +51,8 @@ const ServiceTable: React.FC = () => {
   };
 
   useEffect(() => {
+    document.title = "Ecoavenstra - Manage";
+
     const fetchData = async () => {
       try {
         setIsLoading(true);

@@ -10,6 +10,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+
     const token = localStorage.getItem("token");
     if (!token) {
       router.push("/login");

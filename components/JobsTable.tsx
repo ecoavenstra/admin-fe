@@ -56,9 +56,12 @@ const JobsTable: React.FC = () => {
   };
 
   useEffect(() => {
+    document.title = "Ecoavenstra - Manage";
+
     const fetchData = async () => {
       try {
         setIsLoading(true);
+
         const response = await fetch(BACKEND_URl + "/admin/jobs");
         if (!response.ok) {
           throw new Error("Network response was not ok");
@@ -166,8 +169,8 @@ const JobsTable: React.FC = () => {
 
   const handleDelete = async () => {
     if (selectedJob) {
+      setDeleteLoading(true);
       try {
-        setDeleteLoading(true);
         const response = await fetch(
           BACKEND_URl + `/admin/jobs/${selectedJob.id}`,
           {
@@ -186,7 +189,7 @@ const JobsTable: React.FC = () => {
       } catch (error) {
         console.error("Failed to delete job:", error);
       } finally {
-        setDeleteLoading(true);
+        setDeleteLoading(false);
         toast.success("Deleted sucessfully");
       }
     }
@@ -607,14 +610,33 @@ const JobsTable: React.FC = () => {
       )}
 
       {deleteModal && selectedJob && (
-        <DeleteModal
-          item={selectedJob}
-          onClose={() => setDeleteModal(false)}
-          onConfirm={handleDelete}
-          isLoading={deleteLoading}
-          title="Delete Article"
-          description="Are you sure you want to delete this article? This action cannot be undone."
-        />
+        <div className="">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <h2 className="text-xl font-semibold mb-4">Delete Article</h2>
+              <p className="mb-6">
+                Are you sure you want to delete this article? This action cannot
+                be undone.
+              </p>
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setDeleteModal(false)}
+                  className="bg-gray-300 text-black p-2 rounded"
+                  // disabled={isLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="bg-red-500 text-white p-2 rounded"
+                  // disabled={isLoading}
+                >
+                  {deleteLoading ? <Loader isButton /> : "Delete"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

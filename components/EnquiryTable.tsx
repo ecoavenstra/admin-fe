@@ -48,6 +48,8 @@
 
     useEffect(() => {
       const fetchData = async () => {
+        document.title = "Ecoavenstra - Enquiry";
+
         try {
           setIsLoading(true);
           const response = await fetch(BACKEND_URl + "/admin/enquiries");
