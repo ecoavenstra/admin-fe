@@ -31,6 +31,10 @@ interface Job {
   contactNumber: number;
   openTill: string;
   createdAt: string;
+  companyType: string;
+  name: string;
+  email: string;
+  isApproved: any;
 }
 
 const JobsTable: React.FC = () => {
@@ -257,7 +261,7 @@ const JobsTable: React.FC = () => {
               <th className="border-b p-2">Job Title</th>
               <th className="border-b p-2">Company Name</th>
               <th className="border-b p-2">Category</th>
-              <th className="border-b p-2">Description</th>
+              <th className="border-b p-2">Approve Status</th>
               <th className="border-b p-2">Created At</th>
             </tr>
           </thead>
@@ -311,8 +315,13 @@ const JobsTable: React.FC = () => {
                   <td className="border-b p-2">{item.companyName}</td>
                   <td className="border-b p-2">{item.category}</td>
                   <td className="border-b p-2">
-                    {item.jobDescription.split(" ").slice(0, 3).join(" ")}{" "}
-                    {item.jobDescription.split(" ").length > 3 && "..."}
+                    <span
+                      className={`font-bold ${
+                        item.isApproved ? "text-green-500" : "text-red-500"
+                      }`}
+                    >
+                      {item.isApproved ? "True" : "False"}
+                    </span>
                   </td>
                   <td className="border-b p-2">{formatDate(item.createdAt)}</td>
                 </tr>
@@ -353,6 +362,15 @@ const JobsTable: React.FC = () => {
           <div className="bg-white p-6 rounded-md w-full max-w-lg">
             <h2 className="text-xl font-semibold mb-4">Job Details</h2>
             <p className="mb-2">
+              <strong>Recruiter Name:</strong> {selectedJob.name}
+            </p>
+            <p className="mb-2">
+              <strong>Email :</strong> {selectedJob.email}
+            </p>
+            <p className="mb-2">
+              <strong>Company Type:</strong> {selectedJob.companyType}
+            </p>
+            <p className="mb-2">
               <strong>Job Title:</strong> {selectedJob.jobTitle}
             </p>
             <p className="mb-2">
@@ -375,6 +393,16 @@ const JobsTable: React.FC = () => {
             </p>
             <p className="mb-2">
               <strong>Created At:</strong> {formatDate(selectedJob.createdAt)}
+            </p>
+            <p className="mb-2">
+              <strong>Approved Status:</strong>{" "}
+              <span
+                className={`font-bold ${
+                  selectedJob.isApproved ? "text-green-500" : "text-red-500"
+                }`}
+              >
+                {selectedJob.isApproved ? "True" : "False"}
+              </span>
             </p>
             <p className="mb-2">
               <strong>Description:</strong>
@@ -415,199 +443,221 @@ const JobsTable: React.FC = () => {
           </div>
         </div>
       )}
-      {editModal && selectedJob && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-6 flex flex-col gap-2 rounded shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">Edit Job</h2>
-            <form
-              onSubmit={async (e) => {
-                // e.preventDefault();
-                try {
-                  setEditLoading(true);
-                  const response = await fetch(
-                    BACKEND_URl + `/admin/jobs/${selectedJob.id}`,
-                    {
-                      method: "PUT",
-                      headers: {
-                        "Content-Type": "application/json",
-                      },
-                      body: JSON.stringify(selectedJob),
-                    }
-                  );
-                  if (!response.ok) {
-                    throw new Error("Network response was not ok");
-                  }
-                  const updatedJob = await response.json();
-                  setData(
-                    data.map((job) =>
-                      job.id === selectedJob.id ? updatedJob : job
-                    )
-                  );
-                  setFilteredData(
-                    filteredData.map((job) =>
-                      job.id === selectedJob.id ? updatedJob : job
-                    )
-                  );
-                  setEditModal(false);
-                  toast.success("Edited Successfully");
-                } catch (error) {
-                  console.error("Failed to update job:", error);
-                } finally {
-                  setEditLoading(false);
-                }
-              }}
-            >
-              <div className="flex gap-4">
-                <div className="mb-4">
-                  <label className="block text-gray-700">Job Title</label>
-                  <input
-                    type="text"
-                    className="p-2 border rounded w-full"
-                    value={selectedJob.jobTitle}
-                    onChange={(e) =>
-                      setSelectedJob({
-                        ...selectedJob,
-                        jobTitle: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-gray-700">Company Name</label>
-                  <input
-                    type="text"
-                    className="p-2 border rounded w-full"
-                    value={selectedJob.companyName}
-                    onChange={(e) =>
-                      setSelectedJob({
-                        ...selectedJob,
-                        companyName: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <div className="mb-4">
-                  <label className="block text-gray-700">Salary Range</label>
-                  <input
-                    type="text"
-                    className="p-2 border rounded w-full"
-                    value={selectedJob.salaryRange}
-                    onChange={(e) =>
-                      setSelectedJob({
-                        ...selectedJob,
-                        salaryRange: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-gray-700">Vacancy</label>
-                  <input
-                    type="number"
-                    className="p-2 border rounded w-full"
-                    value={selectedJob.vacancy}
-                    onChange={(e) =>
-                      setSelectedJob({
-                        ...selectedJob,
-                        vacancy: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <div className="mb-4">
-                  <label className="block text-gray-700">Job Type</label>
-                  <input
-                    type="text"
-                    className="p-2 border rounded w-full"
-                    value={selectedJob.jobType}
-                    onChange={(e) =>
-                      setSelectedJob({
-                        ...selectedJob,
-                        jobType: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-gray-700">Job Location</label>
-                  <input
-                    type="text"
-                    className="p-2 border rounded w-full"
-                    value={selectedJob.jobLocation}
-                    onChange={(e) =>
-                      setSelectedJob({
-                        ...selectedJob,
-                        jobLocation: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700">Contact Number</label>
-                <input
-                  type="text"
-                  className="p-2 border rounded w-full"
-                  value={selectedJob.contactNumber}
-                  onChange={(e) =>
-                    setSelectedJob({
-                      ...selectedJob,
-                      //@ts-ignore
-                      contactNumber: e.target.value,
-                    })
-                  }
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700">Open Till</label>
-                <input
-                  type="date"
-                  className="p-2 border rounded w-full"
-                  value={selectedJob.openTill}
-                  onChange={(e) =>
-                    setSelectedJob({
-                      ...selectedJob,
-                      openTill: e.target.value,
-                    })
-                  }
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700">Description</label>
-                <textarea
-                  className="p-2 border rounded w-full"
-                  value={selectedJob.jobDescription}
-                  onChange={(e) =>
-                    setSelectedJob({
-                      ...selectedJob,
-                      jobDescription: e.target.value,
-                    })
-                  }
-                ></textarea>
-              </div>
-              <button
-                type="submit"
-                className="bg-blue-500 text-white px-4 py-2 rounded"
-              >
-                <div className="flex justify-center items-center">
-                  Save Changes {editLoading && <Loader isButton />}
-                </div>
-              </button>
-              <button
-                type="button"
-                className="ml-4 bg-gray-500 text-white px-4 py-2 rounded"
-                onClick={() => setEditModal(false)}
-              >
-                Cancel
-              </button>
-            </form>
+   {editModal && selectedJob && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+    <div className="bg-white p-6 flex flex-col gap-4 rounded shadow-lg w-11/12 max-w-4xl h-[90vh] overflow-y-auto">
+      <h2 className="text-lg font-semibold mb-4">Edit Job</h2>
+      <form
+        onSubmit={async (e) => {
+          e.preventDefault();
+          try {
+            setEditLoading(true);
+            const response = await fetch(
+              BACKEND_URl + `/admin/jobs/${selectedJob.id}`,
+              {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(selectedJob),
+              }
+            );
+            if (!response.ok) {
+              throw new Error("Network response was not ok");
+            }
+            const updatedJob = await response.json();
+            setData(
+              data.map((job) => (job.id === selectedJob.id ? updatedJob : job))
+            );
+            setFilteredData(
+              filteredData.map((job) =>
+                job.id === selectedJob.id ? updatedJob : job
+              )
+            );
+            setEditModal(false);
+            toast.success("Edited Successfully");
+          } catch (error) {
+            console.error("Failed to update job:", error);
+          } finally {
+            setEditLoading(false);
+          }
+        }}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="mb-4">
+            <label className="block text-gray-700">Name</label>
+            <input
+              type="text"
+              className="p-2 border rounded w-full"
+              value={selectedJob.name}
+              onChange={(e) =>
+                setSelectedJob({ ...selectedJob, name: e.target.value })
+              }
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700">Email</label>
+            <input
+              type="email"
+              className="p-2 border rounded w-full"
+              value={selectedJob.email}
+              onChange={(e) =>
+                setSelectedJob({ ...selectedJob, email: e.target.value })
+              }
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700">Company Type</label>
+            <input
+              type="text"
+              className="p-2 border rounded w-full"
+              value={selectedJob.companyType}
+              onChange={(e) =>
+                setSelectedJob({ ...selectedJob, companyType: e.target.value })
+              }
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700">Job Title</label>
+            <input
+              type="text"
+              className="p-2 border rounded w-full"
+              value={selectedJob.jobTitle}
+              onChange={(e) =>
+                setSelectedJob({ ...selectedJob, jobTitle: e.target.value })
+              }
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700">Company Name</label>
+            <input
+              type="text"
+              className="p-2 border rounded w-full"
+              value={selectedJob.companyName}
+              onChange={(e) =>
+                setSelectedJob({ ...selectedJob, companyName: e.target.value })
+              }
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700">Salary Range</label>
+            <input
+              type="text"
+              className="p-2 border rounded w-full"
+              value={selectedJob.salaryRange}
+              onChange={(e) =>
+                setSelectedJob({ ...selectedJob, salaryRange: e.target.value })
+              }
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700">Vacancy</label>
+            <input
+              type="number"
+              className="p-2 border rounded w-full"
+              value={selectedJob.vacancy}
+              onChange={(e) =>
+                setSelectedJob({ ...selectedJob, vacancy: e.target.value })
+              }
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700">Job Type</label>
+            <input
+              type="text"
+              className="p-2 border rounded w-full"
+              value={selectedJob.jobType}
+              onChange={(e) =>
+                setSelectedJob({ ...selectedJob, jobType: e.target.value })
+              }
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700">Job Location</label>
+            <input
+              type="text"
+              className="p-2 border rounded w-full"
+              value={selectedJob.jobLocation}
+              onChange={(e) =>
+                setSelectedJob({ ...selectedJob, jobLocation: e.target.value })
+              }
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700">Contact Number</label>
+            <input
+              type="text"
+              className="p-2 border rounded w-full"
+              value={selectedJob.contactNumber}
+              onChange={(e) =>
+                setSelectedJob({
+                  ...selectedJob,
+                  contactNumber: parseInt(e.target.value, 10),
+                })
+              }
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700">Open Till</label>
+            <input
+              type="date"
+              className="p-2 border rounded w-full"
+              value={selectedJob.openTill}
+              onChange={(e) =>
+                setSelectedJob({ ...selectedJob, openTill: e.target.value })
+              }
+            />
           </div>
         </div>
-      )}
+        <div className="mb-4">
+          <label className="block text-gray-700">Description</label>
+          <textarea
+            className="p-2 border rounded w-full"
+            value={selectedJob.jobDescription}
+            onChange={(e) =>
+              setSelectedJob({
+                ...selectedJob,
+                jobDescription: e.target.value,
+              })
+            }
+          ></textarea>
+        </div>
+        <div className="mb-4">
+          <label className="block text-gray-700">Is Approved</label>
+          <select
+            className="p-2 border rounded w-full"
+            value={selectedJob.isApproved}
+            onChange={(e) =>
+              setSelectedJob({
+                ...selectedJob,
+                isApproved: e.target.value === "true",
+              })
+            }
+          >
+            <option value="false">False</option>
+            <option value="true">True</option>
+          </select>
+        </div>
+        <div className="flex justify-end gap-4">
+          <button
+            type="submit"
+            className="bg-blue-500 text-white px-4 py-2 rounded"
+          >
+            Save Changes {editLoading && <Loader isButton />}
+          </button>
+          <button
+            type="button"
+            className="bg-gray-500 text-white px-4 py-2 rounded"
+            onClick={() => setEditModal(false)}
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
+
 
       {deleteModal && selectedJob && (
         <div className="">
